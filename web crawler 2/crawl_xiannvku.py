@@ -94,7 +94,7 @@ def run(root_url,startpage,endpage):
     cnt_page=cnt_page+1
     print("Album Page {0} is Done! Next Album Page is {1}".format(str(cnt_page),next_link))
     if cnt_page<endpage:                                              #爬多少页
-        run(next_link,1,10)
+        run(next_link,cnt_page,10)
     return 
     
 if __name__ == '__main__':
