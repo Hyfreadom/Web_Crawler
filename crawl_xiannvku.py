@@ -65,7 +65,6 @@ def run(root_url):
     title_list = soup_root.find('ul',attrs={'class':'img'}).find_all('p',attrs={'class':'p_title'})
     next_link =  soup_root.find('a',attrs={'class':'a1'},text='下一页')['href']   #'下一页'按钮对应的链接
     #找到title标签内的封面超链接
-    '''
     for title in title_list:
         cnt_album+=1
         cover_link = title.find('a',target='_blank')['href']
@@ -82,7 +81,6 @@ def run(root_url):
         cycle_download(cover_link,beginNUM,endNUM)
         print("Album {0} is done".format(str(cnt_album)))
         time.sleep(3)
-        '''
     cnt_page=cnt_page+1
     print("Album Page {0} is Done! Next Album Page is {1}".format(str(cnt_page),next_link))
     if cnt_page<9:                                              #爬多少页
