@@ -9,21 +9,20 @@ header = {
     'Cache-Control': 'max-age=0',
     'Connection': 'keep-alive'
     }
-#传入对应网页地址,将地址存入函数内设定的path内
+#receive url and download to specific path
 def Download(url,picAlt,name,endNUM):
-    path='秀人网爬虫/'+picAlt+'/'
-    pic_path=path+str(name)+'.jpg'
+    path='秀人网爬虫/'+picAlt+'/'               #folder address
+    urllib.request.urlretrieve( url, '{0}{1}.jpg'.format(path, name))   #download to specified path
+    print('Picture {0}/{1} named {2} downloaded on: {3}{0}.jpg'.format(name,endNUM,picAlt,path)) #可视化了解进度
     '''
-    if not os.path.exists(path):    #图集地址不存在
-        os.makedirs(path)           #创建图集地址 
-        print('创建图集')
-        '''
-    if not os.path.exists(pic_path):       #图片不存在
+    pic_path=path+str(name)+'.jpg'            #picture address
+    if not os.path.exists(pic_path):          #picture dosen't exist
         urllib.request.urlretrieve( url, '{0}{1}.jpg'.format(path, name))   #download to specified path
-        print('第{0}/{1}张图片{2}已下载，地址为{3}{0}.jpg'.format(name,endNUM,picAlt,path)) #可视化了解进度  
+        print('Picture {0}/{1} named {2} downloaded on: {3}{0}.jpg'.format(name,endNUM,picAlt,path)) #可视化了解进度  
     else:
         print('图片{0}已存在\t'.format(name),end='')
     return
+    '''
 #套图下载函数
 def cycle_download(targetUrl, beginNUM ,endNUM,Album_title):
     req = urllib.request.Request(url=targetUrl,headers=header)
@@ -36,7 +35,6 @@ def cycle_download(targetUrl, beginNUM ,endNUM,Album_title):
     nextpage=str(int(nowpage)+1)                                #理论上的下一页页码
     nowpageLink = targetUrl                                     #当前页码链接
     nextPageLink = soup.find('a',attrs={'class':'a1'},text='下一页')['href']   #'下一页'按钮对应的链接
-    #print('PAGE {0} :'.format(nowpage))                 #输出正在对哪一页进行操作,方便了解进度
     if beginNUM ==endNUM :                              #图片爬完了,退出
         return
     for div in Divs:
@@ -99,13 +97,8 @@ def run(root_url,startpage,endpage):
     
 if __name__ == '__main__':
     url='http://www.xiannvku.com/jigou/xiuren-1.html'           #根据需要更改
-    run(url,1,10)
-    '''
     try:
         run(url,1,10)
     except:
         time.sleep(30)
         run(url,1,10)
-
-
-'''
