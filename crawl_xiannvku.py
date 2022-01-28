@@ -10,13 +10,12 @@ header = {
     'Connection': 'keep-alive'
     }
 #receive url and download to specific path
-def Download(url,picAlt,name):
+def Download(url,picAlt,name,endNUM):
     path='秀人网爬虫/'+picAlt+'/'               #folder address
     urllib.request.urlretrieve( url, '{0}{1}.jpg'.format(path, name))   #download to specified path
-    print('Picture {0} named {1} downloaded on: {2}{0}.jpg'.format(name,picAlt,path)) #可视化了解进度
-    return
+    print('Picture {0}/{1} named {2} downloaded on: {3}{0}.jpg'.format(name,endNUM,picAlt,path)) #可视化了解进度
 #套图下载函数
-def cycle_download(targetUrl,Album_title,number):
+def cycle_download(targetUrl, beginNUM ,endNUM,Album_title):
     req = urllib.request.Request(url=targetUrl,headers=header)
     time.sleep(1)                               #访问停顿
     response = urllib.request.urlopen(req)              #以标签方式打开网址
@@ -27,20 +26,23 @@ def cycle_download(targetUrl,Album_title,number):
     nextpage=str(int(nowpage)+1)                                #理论上的下一页页码
     nowpageLink = targetUrl                                     #当前页码链接
     nextPageLink = soup.find('a',attrs={'class':'a1'},text='下一页')['href']   #'下一页'按钮对应的链接
+    #begin num 其实并不需要
+    if beginNUM ==endNUM :                              #图片爬完了,退出
+        return
     for div in Divs:
-        number+=1
+        beginNUM = beginNUM+1
         picLink = div.get('src')            # 获取图片的url
-        Download(picLink,Album_title,number)  # 根据获取的链接下载图片，传入由图片Alt决定的路径中
+        Download(picLink,Album_title, beginNUM,endNUM)  # 根据获取的链接下载图片，传入由图片Alt决定的路径中
     if (nextPageLink != nowpageLink):       # 没到最后一页，则递归调用本函数继续cycle循环下载
         print('next page is: {0}    Link is: {1}\n'.format(nextpage,nextPageLink))  #可视化
-        cycle_download(nextPageLink,Album_title,number)
+        cycle_download(nextPageLink,beginNUM ,endNUM,Album_title)
     return
  
 #传输父节点链接，本函数用于根据传入的url提取所有子url
 def run(root_url,startpage,endpage):
     cnt_album=0
     cnt_page=startpage
-    #解析 主页面
+    #解析 IMISS 页面
     #url如下
     req_root = urllib.request.Request(url=root_url,headers=header)
     time.sleep(1)                                       #访问停顿
@@ -50,13 +52,12 @@ def run(root_url,startpage,endpage):
 
     #找到所有title标签
     title_list = soup_root.find('ul',attrs={'class':'img'}).find_all('p',attrs={'class':'p_title'})
-    #'下一页'按钮对应的链接
-    next_link =  soup_root.find('a',attrs={'class':'a1'},text='下一页')['href']   
+    next_link =  soup_root.find('a',attrs={'class':'a1'},text='下一页')['href']   #'下一页'按钮对应的链接
+    #找到title标签内的封面超链接
     x=0
     for title in title_list:
         x=x+1
     print('第{0}页找到了{1}套图片,开始下载'.format(cnt_page,x))
-    #解析title标签内的超链接
     for title in title_list:
         cnt_album+=1
         cover_link = title.find('a',target='_blank')['href']
@@ -70,8 +71,14 @@ def run(root_url,startpage,endpage):
             continue
         req = urllib.request.Request(url=cover_link,headers=header)
         time.sleep(1)                                       #访问停顿
+        #解析页码
+        response = urllib.request.urlopen(req)
+        html = response.read().decode('utf-8','ignore')
+        soup = BeautifulSoup(html, 'html.parser')           #parser表示BS4的html解析器
+        endNUM = int(soup.find('a',attrs={'class':'a1'}).get_text()[:-1])
+        beginNUM = 0
         #下载套图
-        cycle_download(cover_link,Album_title,1)
+        cycle_download(cover_link,beginNUM,endNUM,Album_title)
         print("Album {0} is done".format(str(cnt_album)))
         time.sleep(1)
     cnt_page=cnt_page+1
