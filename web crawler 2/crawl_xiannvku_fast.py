@@ -2,6 +2,10 @@ import urllib.request
 from bs4 import BeautifulSoup
 import os
 import time
+url='http://www.xiannvku.com/tags/chaoduanqun-1.html'           #根据需要更改
+Folder ='超短裙/'                                               #根据需要更改
+endpage=5
+
 header = {
     "User-Agent":'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
     'Accept': '*/*',
@@ -11,9 +15,8 @@ header = {
     }
 #receive url and download to specific path
 def Download(url,picAlt,name):
-    path='秀人网爬虫/'+picAlt+'/'               #folder address
+    path=Folder+picAlt+'/'               #folder address
     urllib.request.urlretrieve( url, '{0}{1}.jpg'.format(path, name))   #download to specified path
-    print('Picture {0} named {1} downloaded on: {2}{0}.jpg'.format(name,picAlt,path)) #可视化了解进度
     return
 #套图下载函数
 def cycle_download(targetUrl,Album_title,number):
@@ -23,8 +26,6 @@ def cycle_download(targetUrl,Album_title,number):
     html = response.read().decode('utf-8','ignore')     #以utf-8方式解码read,遇到错误ignore
     soup = BeautifulSoup(html, 'html.parser')           #parser表示BS4的html解析器
     Divs = soup.find_all('img',attrs={'class':'content_img' }) #找到对应标签对应属性的图片,在此为居中放置的大图
-    nowpage = soup.find('a',attrs={'class':'on'}).get_text()    #class: on 对应当前页码的按钮
-    nextpage=str(int(nowpage)+1)                                #理论上的下一页页码
     nowpageLink = targetUrl                                     #当前页码链接
     nextPageLink = soup.find('a',attrs={'class':'a1'},text='下一页')['href']   #'下一页'按钮对应的链接
     for div in Divs:
@@ -32,13 +33,11 @@ def cycle_download(targetUrl,Album_title,number):
         picLink = div.get('src')            # 获取图片的url
         Download(picLink,Album_title,number)  # 根据获取的链接下载图片，传入由图片Alt决定的路径中
     if (nextPageLink != nowpageLink):       # 没到最后一页，则递归调用本函数继续cycle循环下载
-        print('next page is: {0}    Link is: {1}\n'.format(nextpage,nextPageLink))  #可视化
         cycle_download(nextPageLink,Album_title,number)
     return
  
 #传输父节点链接，本函数用于根据传入的url提取所有子url
 def run(root_url,startpage,endpage):
-    cnt_album=0
     cnt_page=startpage
     #解析 主页面
     #url如下
@@ -55,35 +54,30 @@ def run(root_url,startpage,endpage):
     x=0
     for title in title_list:
         x=x+1
-    print('第{0}页找到了{1}套图片,开始下载'.format(cnt_page,x))
+    print('Page {0} found {1} album'.format(cnt_page,x))
     #解析title标签内的超链接
     for title in title_list:
-        cnt_album+=1
         cover_link = title.find('a',target='_blank')['href']
         Album_title = title.find('a',target='_blank').get_text()
-        path='秀人网爬虫/'+Album_title+'/'
+        path=Folder+Album_title+'/'
         if not os.path.exists(path):    #图集地址不存在
             os.makedirs(path)           #创建图集地址 
-            print('创建图集{0}'.format(Album_title))
         else:
-            print('Album{0} {1}is done, link is{2}'.format(str(cnt_album),Album_title,cover_link))
+            print('{0} is done'.format(Album_title))
             continue
-        req = urllib.request.Request(url=cover_link,headers=header)
-        time.sleep(1)                                       #访问停顿
         #下载套图
         cycle_download(cover_link,Album_title,1)
-        print("Album {0} is done".format(str(cnt_album)))
+        print('{0} is done'.format(Album_title))
         time.sleep(1)
+    print("Page {0} is Done! Next page is {1}".format(str(cnt_page),next_link))
     cnt_page=cnt_page+1
-    print("Album Page {0} is Done! Next Album Page is {1}".format(str(cnt_page),next_link))
     if cnt_page<endpage:                                              #爬多少页
-        run(next_link,cnt_page,10)
+        run(next_link,cnt_page,endpage)
     return 
     
 if __name__ == '__main__':
-    url='http://www.xiannvku.com/jigou/xiuren-1.html'           #根据需要更改
     try:
-        run(url,1,10)
+        run(url,1,endpage)
     except:
         time.sleep(30)
-        run(url,1,10)
+        run(url,1,endpage)
